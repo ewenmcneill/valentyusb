@@ -11,6 +11,8 @@ from ..utils.asserts import assertMultiLineEqualSideBySide
 from ..utils.packet import *
 from ..utils.pprint import pp_packet
 
+from migen.sim.core import Simulator
+from migen.fhdl.tools import list_signals
 
 def grouper(n, iterable, pad=None):
     """Group iterable into multiples of n (with optional padding).
@@ -47,6 +49,33 @@ class BaseUsbTestCase(unittest.TestCase):
             return ("vcd/%s.%s.vcd" % (basename, testsuffix))
         else:
             return ("vcd/%s.vcd" % basename)
+
+    @staticmethod
+    def _get_simulation_signals(sim):
+        """
+        Equivalent code to migen.sim.core.Simulation.__init__ handling
+        of vcd signals, so we can re-identify the signals.
+        """
+        # XXX: do we need memory_array replacements as well?
+        signals = list_signals(sim.fragment)
+        for cd in sim.fragment.clock_domains:
+            signals.add(cd.clk)
+            if cd.rst is not None:
+                signals.add(cd.rst)
+            return sorted(signals, key=lambda x: x.duid)
+
+    def run_simulation(self, *args, **kwargs):
+        """
+        Extended version of migen.sim.core.run_simulation, which can
+        capture signals created and also write *.gtkw save file for
+        GtkWave.
+
+        Takes the same arguments as migen.sim.core.run_simulation.
+        """
+        with Simulator(*args, **kwargs) as s:
+            s.run()
+            signals = self._get_simulation_signals(s)
+            #print("Signals:", signals)
 
 # Test case helper class for more complex test cases
 #

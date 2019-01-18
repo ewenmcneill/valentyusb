@@ -175,7 +175,7 @@ class TestRxShifter(BaseUsbTestCase):
                 dut = RxShifter(8)
 
                 actual_output.clear()
-                run_simulation(
+                self.run_simulation(
                     dut,
                     send(**vector),
                     vcd_name=self.make_vcd_name(testsuffix="%02d" % i),
