@@ -3,6 +3,7 @@
 from migen import *
 from migen.fhdl.decorators import ResetInserter
 
+from ..test.common import BaseUsbTestCase
 import unittest
 
 
@@ -83,7 +84,7 @@ class RxBitstuffRemover(Module):
         ]
 
 
-class TestRxBitstuffRemover(unittest.TestCase):
+class TestRxBitstuffRemover(BaseUsbTestCase):
     def test_bitstuff(self):
         def set_input(dut, r, v):
             yield dut.reset.eq(r == '1')
@@ -199,7 +200,8 @@ class TestRxBitstuffRemover(unittest.TestCase):
             with self.subTest(i=i, vector=vector):
                 dut = RxBitstuffRemover()
 
-                run_simulation(dut, stim(**vector), vcd_name="vcd/test_bitstuff_%d.vcd" % i)
+                run_simulation(dut, stim(**vector),
+                    vcd_name=self.make_vcd_name(testsuffix=str(i)))
                 i += 1
 
 

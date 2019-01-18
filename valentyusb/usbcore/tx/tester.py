@@ -1,12 +1,25 @@
 #!/usr/bin/env python3
 
+import inspect
+
 from migen import *
 
 MIGEN_SIGNALS = ("reset", "ce")
 
+def get_ultimate_caller_modulename():
+    """
+    Helper to find the ultimate caller's module name (extra level further up
+    stack than case where test directly inherits from BaseUsbTestCase).
+    """
+    caller = inspect.stack()[2]
+    module = inspect.getmodule(caller[0])
+    return module.__spec__.name
+
 def create_tester(dut_type, **def_args):
     def run(self, **test_args):
         name = self.id()
+        self.vcd_name = self.make_vcd_name(
+            modulename=get_ultimate_caller_modulename())
 
         self.inputs = dict()
         self.outputs = dict()
@@ -118,7 +131,7 @@ def create_tester(dut_type, **def_args):
 
 
         # run simulation
-        run_simulation(dut, stim(), vcd_name="vcd/%s.vcd" % name)
+        run_simulation(dut, stim(), vcd_name=self.vcd_name)
 
         return actual_output
 

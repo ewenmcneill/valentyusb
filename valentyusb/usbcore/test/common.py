@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import unittest
+import inspect
 
 from itertools import zip_longest
 
@@ -20,8 +21,36 @@ def grouper(n, iterable, pad=None):
     """
     return zip_longest(*[iter(iterable)]*n, fillvalue=pad)
 
+class BaseUsbTestCase(unittest.TestCase):
+    """
+    Test case helpers common to all test cases, simple and complex
+    """
+    def make_vcd_name(self, basename=None, modulename=None, testsuffix=None):
+        """
+        Create a name for the vcd file based on the test case
+        module/class/method, with optional testsuffix (eg, foo.N)
+        """
+        if not basename:
+            basename = self.id()
 
-class CommonUsbTestCase(unittest.TestCase):
+            # Automagically guess caller's module if not defined and
+            # unittest.TestCase is finding __main__ as top level
+            if basename.startswith('__main__') and not modulename:
+                caller = inspect.stack()[1]
+                module = inspect.getmodule(caller[0])
+                modulename = module.__spec__.name
+
+            if modulename:
+                basename = basename.replace('__main__', modulename)
+
+        if testsuffix:
+            return ("vcd/%s.%s.vcd" % (basename, testsuffix))
+        else:
+            return ("vcd/%s.vcd" % basename)
+
+# Test case helper class for more complex test cases
+#
+class CommonUsbTestCase(BaseUsbTestCase):
     maxDiff=None
 
     def assertMultiLineEqualSideBySide(self, data1, data2, msg):
